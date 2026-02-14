@@ -1,4 +1,4 @@
-name: Linux Remote Desktop - Fixed GUI
+name: Linux Remote Desktop - Final Fix
 
 on:
   workflow_dispatch:
@@ -30,18 +30,20 @@ jobs:
           sudo useradd -m user
           sudo adduser user sudo
           echo "user:${{ github.event.inputs.pin_code }}" | sudo chpasswd
+          # السماح للمستخدم بتشغيل sudo بدون كلمة مرور (حل مشكلة الصورة الثانية)
           echo "user ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/user
           
-          # إعداد الجلسة الرسومية بشكل صحيح لتجنب خطأ الصورة الأخيرة
-          sudo -u user bash -c 'echo "exec startxfce4" > ~/.chrome-remote-desktop-session'
-          sudo -u user bash -c 'mkdir -p ~/.config/xfce4'
+          # الحل الجذري لمشكلة Failsafe session (الصور 5 و 6)
+          sudo -u user bash -c 'echo "exec /etc/X11/Xsession /usr/bin/xfce4-session" > ~/.chrome-remote-desktop-session'
           
-          # تأكيد الصلاحيات
+          # تأكيد الصلاحيات والملكية
           sudo chown user:user /home/user/.chrome-remote-desktop-session
+          sudo chmod +x /home/user/.chrome-remote-desktop-session
 
       - name: تشغيل الخدمة والاتصال
         run: |
           # التشغيل باستخدام كود المصادقة الجديد
+          # ملاحظة: يجب أن يكون الكود جديداً تماماً لتجنب خطأ الصورة الثالثة
           sudo -u user -i bash -c "${{ github.event.inputs.auth_code }} --pin=${{ github.event.inputs.pin_code }}" &
           
           echo "--- السيرفر جاهز! اذهب الآن لمتصفحك ---"
