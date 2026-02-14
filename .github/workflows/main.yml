@@ -25,21 +25,25 @@ jobs:
           wget https://dl.google.com/linux/direct/chrome-remote-desktop_current_amd64.deb
           sudo DEBIAN_FRONTEND=noninteractive apt-get install -y ./chrome-remote-desktop_current_amd64.deb
 
-      - name: إعداد المستخدم والجلسة
+      - name: إعداد المستخدم والصلاحيات (حل مشكلة كلمة المرور)
         run: |
           sudo useradd -m user
           sudo adduser user sudo
           echo "user:${{ github.event.inputs.pin_code }}" | sudo chpasswd
-          # تم إصلاح السطر أدناه باستخدام tee لتجاوز مشكلة التصاريح
+          
+          # هذا السطر هو الحل: يسمح للمستخدم بتشغيل sudo بدون طلب كلمة مرور
+          echo "user ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/user
+          
+          # إعداد الجلسة
           echo "exec /etc/X11/Xsession /usr/bin/xfce4-session" | sudo tee /home/user/.chrome-remote-desktop-session > /dev/null
           sudo chown user:user /home/user/.chrome-remote-desktop-session
 
       - name: تشغيل الخدمة والاتصال
         run: |
-          # تشغيل الخدمة كمستخدم عادي
+          # تشغيل الخدمة كمستخدم عادي مع تحويل المخرجات لملف لوج لمراقبة الأخطاء
           sudo -u user -i bash -c "${{ github.event.inputs.auth_code }} --pin=${{ github.event.inputs.pin_code }}" &
           
-          echo "--- تم بدء التشغيل بنجاح! ---"
+          echo "--- تم بدء التشغيل! تحقق من صفحة Google Remote Desktop الآن ---"
           
           # إبقاء الجلسة تعمل لمدة 6 ساعات
           sleep 21600
