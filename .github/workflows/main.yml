@@ -29,17 +29,17 @@ jobs:
         run: |
           sudo useradd -m user
           sudo adduser user sudo
-          echo 'user:${{ github.event.inputs.pin_code }}' | sudo chpasswd
-          echo "exec /etc/X11/Xsession /usr/bin/xfce4-session" > /home/user/.chrome-remote-desktop-session
+          echo "user:${{ github.event.inputs.pin_code }}" | sudo chpasswd
+          # تم إصلاح السطر أدناه باستخدام tee لتجاوز مشكلة التصاريح
+          echo "exec /etc/X11/Xsession /usr/bin/xfce4-session" | sudo tee /home/user/.chrome-remote-desktop-session > /dev/null
           sudo chown user:user /home/user/.chrome-remote-desktop-session
 
       - name: تشغيل الخدمة والاتصال
         run: |
-          # استخراج الأمر من المدخلات وتشغيله كمستخدم عادي
-          # الرمز المدخل يجب أن يكون الأمر كاملاً الذي يبدأ بـ DISPLAY=
+          # تشغيل الخدمة كمستخدم عادي
           sudo -u user -i bash -c "${{ github.event.inputs.auth_code }} --pin=${{ github.event.inputs.pin_code }}" &
           
-          echo "--- تم بدء التشغيل! اذهب الآن لمتصفحك وتحقق من الاتصال ---"
+          echo "--- تم بدء التشغيل بنجاح! ---"
           
-          # إبقاء الـ Action يعمل لمدة 6 ساعات (الحد الأقصى لـ GitHub Actions)
+          # إبقاء الجلسة تعمل لمدة 6 ساعات
           sleep 21600
